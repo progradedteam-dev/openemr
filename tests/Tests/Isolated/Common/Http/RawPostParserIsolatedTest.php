@@ -227,6 +227,21 @@ class RawPostParserIsolatedTest extends TestCase
         $parser->parse();
     }
 
+    public function testRejectsBracketBareAutoIndexedKeysWhenUrlEncoded(): void
+    {
+        // Browsers encode the bracket pair as %5B%5D in form bodies; the
+        // bracket-bare check has to urldecode the key fragment before
+        // testing, otherwise the regression slips through.
+        $parser = new RawPostParser(
+            $this->readerFor('foo%5B%5D=1&foo%5B%5D=2'),
+            'application/x-www-form-urlencoded',
+        );
+
+        $this->expectException(RawPostParserException::class);
+        $this->expectExceptionMessage('bracket-bare');
+        $parser->parse();
+    }
+
     /**
      * Build an array through a helper whose return type is
      * `array<string, mixed>` so PHPStan can't narrow it to the literal shape

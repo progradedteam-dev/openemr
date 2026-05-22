@@ -156,11 +156,14 @@ final class RawPostParser
         // Reject bracket-bare auto-indexed keys (foo[]=1&foo[]=2) up front
         // rather than silently produce a different shape from native $_POST
         // via array_replace_recursive. Forces callers onto explicit indices.
+        // URL-decode the key fragment before checking — browsers encode the
+        // bracket pair as %5B%5D in form bodies, so a literal `[]` test on
+        // the raw pair would miss them.
         foreach ($pairs as $pair) {
             if ($pair === '') {
                 continue;
             }
-            $keyPart = explode('=', $pair, 2)[0];
+            $keyPart = urldecode(explode('=', $pair, 2)[0]);
             if (str_contains($keyPart, '[]')) {
                 throw new RawPostParserException(
                     'RawPostParser does not support bracket-bare auto-indexed keys (e.g. foo[]=1). Use explicit indices (foo[0], foo[1], ...).',
